@@ -1,0 +1,12 @@
+name: blastradius
+version: 0.1.0
+description: >-
+  Measures a destructive command's target before it runs: how many files die, how many git
+  can restore, and how many are gone forever. Blocks the call with the count instead of
+  asking "allow this command?" and hoping the model knows what it will destroy.
+author: valen
+provides_tools:
+  - blast_radius
+provides_hooks:
+  - pre_tool_call
+requires_env: []
