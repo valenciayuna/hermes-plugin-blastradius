@@ -10,7 +10,12 @@ Hermes asks "allow this command?" You answer yes without knowing what dies. This
    e.g. .env.local, data/app.db, migrations/0007_draft.sql
 ```
 
-The blocking call is `pre_tool_call`. The command does not run until the number is on the record. Setting `BLASTRADIUS_ALLOW=1` lets it through, for operators who have decided.
+The blocking call is `pre_tool_call`. The command does not run until the number is on the record.
+
+Then you decide, and the plugin gets out of the way:
+
+- `blast_allow("rm -rf data")` permits exactly that command, once, for 5 minutes. The grant is spent on the next matching call and the gate closes again.
+- `BLASTRADIUS_ALLOW=1` is the session-wide override, for when you trust everything in front of you.
 
 ## Why the split matters
 
@@ -24,7 +29,8 @@ The blocking call is `pre_tool_call`. The command does not run until the number 
 | `git clean -f`, `-fd`, `-fdx` | the worktree, split into tracked and untracked |
 | `git reset --hard` | the worktree as it stands now |
 | `truncate -s 0`, `> file` | the file being zeroed |
-| `mv` onto an existing path | the destination being overwritten |
+| `mv` onto an existing file | the file that gets overwritten |
+| `mv into a directory`, plain rename | nothing, so it is not gated |
 
 ## What it does not measure
 
@@ -50,7 +56,7 @@ hermes plugins enable blastradius
 > /blast rm -rf src
 ```
 
-Or ask the agent to preview a command. The `blast_radius` tool runs the same measurement without executing anything.
+Or ask the agent to preview a command. The `blast_radius` tool runs the same measurement without executing anything, and `blast_allow` issues the one-shot confirmation after you have seen the number.
 
 ## Related, but different
 
