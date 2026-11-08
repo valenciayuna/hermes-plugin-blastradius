@@ -5,6 +5,13 @@
 A Hermes Agent plugin that measures a destructive command's real target, copies it into a
 checksummed snapshot before it runs, and restores it afterwards when something goes wrong.
 
+![BlastRadius 2.0 demo](demo/blastradius-demo.gif)
+
+<sub>43 files measured → snapshot verified → command runs → files restored, checksums checked.
+Full 35s MP4: [demo/blastradius-demo.mp4](demo/blastradius-demo.mp4) ·
+text transcript: [demo/DEMO-OUTPUT.txt](demo/DEMO-OUTPUT.txt)</sub>
+
+
 ```bash
 hermes plugins install https://github.com/valenciayuna/hermes-plugin-blastradius
 hermes plugins enable blastradius
