@@ -1,0 +1,86 @@
+
+==========================================================================
+1. The agent is about to run:  rm -rf .
+==========================================================================
+BLASTRADIUS // IMPACT REPORT
+
+Command: "rm -rf ."
+
+Impact:
+  43 file(s) affected
+  7 tracked by git
+  36 untracked (2 ignored)
+  29.4 KB affected
+
+Potentially valuable data:
+  ".env"
+  "data/app.db"
+  "migrations/0007_draft.sql"
+
+Recovery:
+  Git-tracked files may be recoverable from the repository.
+  Untracked files are not recoverable from Git.
+
+Risk level: HIGH
+
+==========================================================================
+2. Blast Radius stops it (pre_tool_call) and offers the numbers
+==========================================================================
+hook verdict: block
+BLASTRADIUS // IMPACT REPORT
+
+Command: "rm -rf ."
+
+Impact:
+  43 file(s) affected
+  7 tracked by git
+  36 untracked (2 ignored)
+  29.4 KB affected
+
+Potentially valuable data:
+  ".env"
+  "data/app.db"
+  "migrations/0007_draft.sql"
+
+Recovery:
+  Git-tracked files may be recoverable from the repository.
+  Untracked files are not recoverable from Git.
+
+Risk level: HIGH
+
+==========================================================================
+3. Snapshot: copy what git cannot give back
+==========================================================================
+snapshot id : blast-20261108-112627-34f5
+files copied: 43
+bytes copied: 30,141
+verified    : True
+
+==========================================================================
+4. Independent verification (re-read every checksum)
+==========================================================================
+{'ok': True, 'id': 'blast-20261108-112627-34f5', 'checked': 43, 'bad': [], 'count': 43}
+
+==========================================================================
+5. The command runs. Everything is gone.
+==========================================================================
+  src                      exists=False
+  README.md                exists=False
+  .env                     exists=False
+  data/app.db              exists=False
+  migrations/0007_draft.sql exists=False
+
+==========================================================================
+6. Restore: plan first, then apply
+==========================================================================
+{'ok': True, 'planned': True, 'id': 'blast-20261108-112627-34f5', 'base': '/tmp/blastradius-demo-nwsv8fav/acme-api', 'targets': 43, 'conflicts': 0, 'conflict_paths': []}
+
+{'ok': True, 'id': 'blast-20261108-112627-34f5', 'restored': 43, 'verified': 43, 'failed': []}
+
+==========================================================================
+7. Proof the bytes came back
+==========================================================================
+  .env      : STRIPE_SECRET=sk_live_do_not_lose_me
+  app.db    : 2064 bytes
+  migration : ALTER TABLE users ADD COLUMN plan;
+  src files : ['app.py', 'models.py', 'settings.py', 'views.py', 'worker.py']
