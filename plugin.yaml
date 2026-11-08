@@ -1,13 +1,18 @@
 name: blastradius
-version: 0.2.0
+version: 2.0.0
 description: >-
-  Measures a destructive command's target before it runs: how many files die, how many git
-  can restore, and how many are gone forever. Blocks the call with the count, then lets the
-  user confirm one specific command once instead of asking "allow this command?" blind.
+  Filesystem protection for AI agents. Measures what a destructive command would destroy
+  (tracked vs unrecoverable files, valuable data, risk level), copies the target into a
+  checksummed snapshot before it runs, and restores it afterwards with verified checksums.
+  Three risk policies control how much friction that costs.
 author: valen
 provides_tools:
   - blast_radius
   - blast_allow
+  - blast_snapshot
+  - blast_snapshots
+  - blast_restore
+  - blast_policy
 provides_hooks:
   - pre_tool_call
 requires_env: []
