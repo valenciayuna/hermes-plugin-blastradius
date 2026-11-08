@@ -102,9 +102,9 @@ def main() -> int:
             print(f"  {path:24} exists={Path(repo / path).exists()}")
 
         rule("6. Restore: plan first, then apply")
-        print(br.restore_snapshot(snap["id"]))
+        print(br.restore(snap["id"]))
         print()
-        print(br.restore_snapshot(snap["id"], confirm=True))
+        print(br.restore(snap["id"], confirm=True))
 
         rule("7. Proof the bytes came back")
         print("  .env      :", (repo / ".env").read_text().strip())

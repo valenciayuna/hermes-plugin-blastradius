@@ -1,10 +1,10 @@
 name: blastradius
 version: 2.0.0
 description: >-
-  Filesystem protection for AI agents. Measures what a destructive command would destroy
-  (tracked vs unrecoverable files, valuable data, risk level), copies the target into a
-  checksummed snapshot before it runs, and restores it afterwards with verified checksums.
-  Three risk policies control how much friction that costs.
+  Filesystem protection for AI agents. Measures what a destructive command would destroy,
+  following bash -c wrappers, subshells and cd chains; copies the target into a checksummed
+  snapshot before it runs; restores it afterwards with verified checksums; and keeps the disk
+  cost bounded with retention limits and rebuildable-directory excludes.
 author: valen
 provides_tools:
   - blast_radius
@@ -13,6 +13,8 @@ provides_tools:
   - blast_snapshots
   - blast_restore
   - blast_policy
+  - blast_prune
+  - blast_pin
 provides_hooks:
   - pre_tool_call
 requires_env: []

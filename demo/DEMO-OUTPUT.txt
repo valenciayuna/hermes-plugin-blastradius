@@ -48,18 +48,20 @@ Recovery:
 
 Risk level: HIGH
 
+This command was not executed (balanced: untracked data would not be recoverable from git). Show the user these numbers, then either narrow the target, or confirm and call blast_allow("rm -rf .") to permit this exact command once (valid 5 minutes), or set BLASTRADIUS_ALLOW=1 for a session-wide override.
+
 ==========================================================================
 3. Snapshot: copy what git cannot give back
 ==========================================================================
-snapshot id : blast-20261108-112627-34f5
-files copied: 43
-bytes copied: 30,141
+snapshot id : blast-20261108-120724-42aa
+files copied: 10
+bytes copied: 2,275
 verified    : True
 
 ==========================================================================
 4. Independent verification (re-read every checksum)
 ==========================================================================
-{'ok': True, 'id': 'blast-20261108-112627-34f5', 'checked': 43, 'bad': [], 'count': 43}
+{'ok': True, 'id': 'blast-20261108-120724-42aa', 'checked': 10, 'bad': [], 'count': 10}
 
 ==========================================================================
 5. The command runs. Everything is gone.
@@ -73,9 +75,9 @@ verified    : True
 ==========================================================================
 6. Restore: plan first, then apply
 ==========================================================================
-{'ok': True, 'planned': True, 'id': 'blast-20261108-112627-34f5', 'base': '/tmp/blastradius-demo-nwsv8fav/acme-api', 'targets': 43, 'conflicts': 0, 'conflict_paths': []}
+{'ok': True, 'planned': True, 'id': 'blast-20261108-120724-42aa', 'base': '/tmp/blastradius-demo-0njk18or/acme-api', 'targets': 10, 'conflicts': 0, 'conflict_paths': [], 'restored': 0, 'verified': 0, 'failed': []}
 
-{'ok': True, 'id': 'blast-20261108-112627-34f5', 'restored': 43, 'verified': 43, 'failed': []}
+{'ok': True, 'id': 'blast-20261108-120724-42aa', 'restored': 10, 'verified': 10, 'failed': []}
 
 ==========================================================================
 7. Proof the bytes came back
