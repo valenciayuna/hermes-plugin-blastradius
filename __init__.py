@@ -112,13 +112,18 @@ _RESTORE_SCHEMA = {
     "name": "blast_restore",
     "description": (
         "Restore files from a snapshot. Without confirm it only reports what would change; with "
-        "confirm it writes the files and verifies their checksums afterwards."
+        "confirm it writes the files and verifies their checksums afterwards. Files edited after "
+        "the snapshot are conflicts and are skipped unless overwrite_conflicts is set."
     ),
     "parameters": {
         "type": "object",
         "properties": {
             "snapshot_id": {"type": "string", "description": "Snapshot id, prefix, or 'last'."},
             "confirm": {"type": "boolean", "description": "Actually write the files."},
+            "overwrite_conflicts": {
+                "type": "boolean",
+                "description": "Also replace files that changed after the snapshot. Off by default.",
+            },
         },
         "required": [],
     },
@@ -179,7 +184,8 @@ def _snapshots_handler(args: dict, **_) -> str:
 
 
 def _restore_handler(args: dict, **_) -> str:
-    return blast_restore(str(args.get("snapshot_id") or "last"), bool(args.get("confirm")))
+    return blast_restore(str(args.get("snapshot_id") or "last"), bool(args.get("confirm")),
+                         bool(args.get("overwrite_conflicts")))
 
 
 def _policy_handler(args: dict, **_) -> str:

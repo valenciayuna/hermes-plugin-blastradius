@@ -257,7 +257,10 @@ def main() -> int:
         conflict_plan = br.blast_restore(created["id"])
         check("conflict detected in the plan", "Conflicts: 1" in conflict_plan, conflict_plan[:60])
         br.blast_restore(created["id"], True)
-        check("confirmed restore wins over the newer file",
+        check("confirmed restore leaves the newer file alone",
+              (data / "file07.txt").read_text() == "changed later\n")
+        br.blast_restore(created["id"], True, True)
+        check("restore only replaces it when overwrite_conflicts is set",
               (data / "file07.txt").read_text() == "payload 7\n")
 
         stored = next(p for p in (Path(created["dir"]) / "files").rglob("app.db"))

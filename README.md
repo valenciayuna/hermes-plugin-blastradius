@@ -99,9 +99,21 @@ SHA-256 each, then re-read to confirm the copy matches.
 /blast restore last confirm    # apply, then verify
 ```
 
-Refuses to restore from a snapshot that fails its own verification; a file that changed after
-the snapshot is reported as a conflict rather than overwritten silently. Every restore is logged
-to `recovery.log` and marks the snapshot as recently used.
+Refuses to restore from a snapshot that fails its own verification.
+
+A file that changed after the snapshot is a **conflict**, and conflicts are skipped, not written
+over: the newer file is usually the work you were doing. The plan and the result both report the
+count and the first ten paths. Replacing them is possible but has to be asked for:
+
+```json
+{"snapshot_id": "last", "confirm": true, "overwrite_conflicts": true}
+```
+
+Every restore is logged to `recovery.log` and marks the snapshot as recently used.
+
+Snapshots of paths outside the git root (for example `rm -rf /tmp/build` run inside a repo) are
+stored under an `abs/` prefix with the absolute path, and restore puts them back where they came
+from.
 
 ### 5. Retention
 

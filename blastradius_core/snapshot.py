@@ -155,6 +155,20 @@ def prune(plan: bool = True, retention: Retention | None = None) -> dict:
 # -------------------------------------------------------------------- creation
 
 
+def _rel(path: Path, root: Path | None) -> str:
+    """Relative key for the manifest.
+
+    Targets outside the git root are normal (rm -rf /tmp/build from inside a repo), so they get an
+    abs/ prefix instead of raising ValueError.
+    """
+    if root is not None:
+        try:
+            return str(path.relative_to(root))
+        except ValueError:
+            pass
+    return "abs/" + str(path).lstrip("/")
+
+
 def create_snapshot(analysis: dict, command: str, include_excluded: bool = False) -> dict:
     """Copy the affected regular files into a checksummed snapshot, then verify the copies.
 
@@ -176,7 +190,7 @@ def create_snapshot(analysis: dict, command: str, include_excluded: bool = False
             continue
         if not path.is_file():
             continue
-        relative = str(path.relative_to(root)) if root else str(path)
+        relative = _rel(path, root)
         if not include_excluded and is_excluded(Path(relative)) and path.name not in _NEVER_EXCLUDE:
             excluded.append(relative)
             continue
@@ -208,7 +222,7 @@ def create_snapshot(analysis: dict, command: str, include_excluded: bool = False
     entries: list[dict] = []
     copied = 0
     for src in regular:
-        relative = str(src.relative_to(root)) if root else str(src)
+        relative = _rel(src, root)
         safe = relative.lstrip("/").replace("..", "__")
         dest = files_dir / safe
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -227,7 +241,7 @@ def create_snapshot(analysis: dict, command: str, include_excluded: bool = False
             entries.append({"path": relative, "error": str(exc), "verified": False})
 
     for link in links:
-        relative = str(link.relative_to(root)) if root else str(link)
+        relative = _rel(link, root)
         entries.append({"path": relative, "type": "symlink",
                         "target": os.readlink(link), "verified": False, "skipped": True})
 

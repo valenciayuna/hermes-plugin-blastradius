@@ -71,8 +71,13 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def restore(snap_id: str = "last", confirm: bool = False) -> dict:
-    """Plan or apply a restore. Refuses to run from a snapshot that fails verification."""
+def restore(snap_id: str = "last", confirm: bool = False,
+            overwrite_conflicts: bool = False) -> dict:
+    """Plan or apply a restore. Refuses to run from a snapshot that fails verification.
+
+    Files changed since the snapshot are conflicts. They are never written over unless the caller
+    asks for it explicitly, because the newer file is usually the user's work.
+    """
     snap_dir = snap.find_snapshot(snap_id)
     if snap_dir is None:
         return {"ok": False, "error": f"snapshot not found: {snap_id}"}
@@ -91,13 +96,16 @@ def restore(snap_id: str = "last", confirm: bool = False) -> dict:
     for entry in manifest.get("files", []):
         if entry.get("skipped") or entry.get("error"):
             continue
-        dest = base / entry["path"]
+        key = entry["path"]
+        dest = Path("/" + key[4:]) if key.startswith("abs/") else base / key
         stored = snap_dir / entry["stored"]
         state = {"path": entry["path"], "dest": str(dest), "stored": str(stored)}
         if dest.is_file():
             if _sha256(dest) != entry.get("sha256"):
                 state["conflict"] = "exists and differs from the snapshot"
                 conflicts.append(state)
+                if not overwrite_conflicts:
+                    continue          # never replace work done after the snapshot
             else:
                 state["status"] = "already identical"
                 targets.append(state)

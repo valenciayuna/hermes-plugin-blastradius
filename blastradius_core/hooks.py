@@ -138,8 +138,10 @@ def blast_snapshots() -> str:
     return snap.describe_list(snap.list_snapshots())
 
 
-def blast_restore(snap_id: str = "last", confirm: bool = False) -> str:
-    return rec.describe_restore(rec.restore(snap_id, confirm=confirm))
+def blast_restore(snap_id: str = "last", confirm: bool = False,
+                  overwrite_conflicts: bool = False) -> str:
+    return rec.describe_restore(rec.restore(snap_id, confirm=confirm,
+                                            overwrite_conflicts=overwrite_conflicts))
 
 
 def blast_policy(new_policy: str = "") -> str:
@@ -167,7 +169,9 @@ def _blast_command(raw_args: str) -> str:
 
     if head == "restore":
         snap_id = words[1] if len(words) > 1 and not words[1] == "confirm" else "last"
-        return blast_restore(snap_id, confirm="confirm" in words or "--confirm" in words)
+        return blast_restore(snap_id,
+                             confirm="confirm" in words or "--confirm" in words,
+                             overwrite_conflicts="--overwrite" in words)
     if head == "snapshots":
         return blast_snapshots()
     if head == "snapshot":

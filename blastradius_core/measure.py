@@ -31,7 +31,11 @@ MAX_DEPTH = 3
 _RM_RE = re.compile(r"(?:^|[|;&]\s*|\bthen\s+|\bdo\s+)rm\b")
 _GIT_CLEAN_RE = re.compile(r"\bgit\s+clean\b[^\n]*?(?<![\w-])-[\w-]*f")
 _GIT_RESET_RE = re.compile(r"\bgit\s+reset\b[^\n]*--hard")
-_TRUNCATE_RE = re.compile(r"(?:^|[|;&]\s*)(?:truncate\s+-s\s*0|:)\s*>")
+_TRUNCATE_RE = re.compile(r"(?:^|[|;&]\s*)(?:truncate\s+-s\s*0|:)\s*>?")
+# `> file` empties the file just like truncate does. 2> and &> are not truncation of a file we
+# care about, and >> appends.
+_REDIRECT_TRUNC_RE = re.compile(r"(?<![0-9&>])>(?!>|&)\s*([^\s;|&<>()]+)")
+_TRUNCATE_ARG_RE = re.compile(r"(?:^|[|;&]\s*)truncate\s+-s\s*0\s+([^\s;|&<>]+)")
 _MV_RE = re.compile(r"(?:^|[|;&]\s*)mv\b")
 
 _DESTRUCTIVE_WORD_RE = re.compile(
@@ -194,7 +198,7 @@ def classify(command: str) -> str | None:
         return "git-reset-hard"
     if _RM_RE.search(command):
         return "rm"
-    if _TRUNCATE_RE.search(command):
+    if _TRUNCATE_RE.search(command) or _REDIRECT_TRUNC_RE.search(command):
         return "truncate"
     if _MV_RE.search(command):
         return "mv"
@@ -213,11 +217,32 @@ def _leading_tokens(command: str) -> list[str]:
         return segment.split()
 
 
+def redirect_targets(command: str) -> list[str]:
+    """Files a `>` would empty. Pseudo files and anything we cannot resolve are left out."""
+    out: list[str] = []
+    for match in _REDIRECT_TRUNC_RE.finditer(command):
+        target = match.group(1)
+        if target.startswith(("/dev/", "/proc/", "/sys/")):
+            continue
+        if "$" in target or "*" in target or "`" in target:
+            continue
+        out.append(target)
+    return out
+
+
 def targets_of(command: str, kind: str) -> list[str]:
-    if kind.startswith("git-") or kind == "truncate":
+    if kind == "truncate":
+        found = redirect_targets(command)
+        for match in _TRUNCATE_ARG_RE.finditer(command):
+            candidate = match.group(1)
+            if "$" not in candidate and candidate not in found:
+                found.append(candidate)
+        return found
+    if kind.startswith("git-"):
         return []
     paths: list[str] = []
-    for token in _leading_tokens(command)[1:]:
+    without_redirects = re.split(r"(?<![0-9&>])>(?!>|&)", command, maxsplit=1)[0]
+    for token in _leading_tokens(without_redirects)[1:]:
         if token.startswith("-") or token == "" or token.startswith(">"):
             continue
         paths.append(token)
@@ -390,17 +415,26 @@ def measure(command: str, cwd: str | None = None) -> dict:
 
     files: list[Path] = []
     kinds: list[str] = []
+    unresolved_redirects: list[str] = []
     for task in tasks:
         kind = classify(task.segment)
         if kind is None:
             continue
         kinds.append(kind)
-        files.extend(_files_for_task(task))
+        found = _files_for_task(task)
+        if kind == "truncate" and not found and _REDIRECT_TRUNC_RE.search(task.segment):
+            # `> $(mktemp)` or `> build/*` empties something we cannot name. Saying zero files
+            # would read as harmless, so this stays unmeasured.
+            unresolved_redirects.append(task.segment.strip())
+        files.extend(found)
 
     if not kinds:
         if unmeasured:
             return _empty("every segment is unmeasurable: " + "; ".join(unmeasured[:2]))
         return _empty("not a command shape we measure")
+
+    if unresolved_redirects and not files:
+        return _empty("redirect target cannot be resolved: " + unresolved_redirects[0][:80])
 
     deduped = sorted({p.resolve() for p in files})
     roots = {str(r) for r in (git_root_of(workdir),) if r}
