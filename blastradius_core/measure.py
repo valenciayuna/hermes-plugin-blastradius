@@ -13,6 +13,7 @@ of being told "safe".
 
 from __future__ import annotations
 
+import glob
 import os
 import re
 import shlex
@@ -248,6 +249,20 @@ def mv_overwrites(command: str, workdir: Path) -> tuple[bool, Path | None]:
 _git_root_cache: dict[str, Path | None] = {}
 
 
+def _display(path: Path, root: Path | None) -> str:
+    """Path relative to the repo when it lives inside it, absolute otherwise.
+
+    A target outside the git root is normal (`rm -rf /tmp/x` from inside a repo) and must not raise:
+    this runs inside a pre_tool_call hook, where an exception costs the whole report.
+    """
+    if root is not None:
+        try:
+            return str(path.relative_to(root))
+        except ValueError:
+            pass
+    return str(path)
+
+
 def git_root_of(start: Path) -> Path | None:
     key = str(start)
     if key in _git_root_cache:
@@ -337,7 +352,15 @@ def _files_for_task(task: Task) -> list[Path]:
             _walk(dest, files)
     else:
         for raw in targets_of(task.segment, kind):
-            _walk(_resolve(task.cwd, raw), files)
+            resolved = _resolve(task.cwd, raw)
+            if any(ch in raw for ch in "*?["):
+                # the shell would expand this before rm ever runs, so the report has to as well:
+                # a glob reported as 0 files is a 0-file impact report for a real deletion
+                matches = sorted(glob.glob(str(resolved), recursive=True))
+                for match in matches:
+                    _walk(Path(match), files)
+            else:
+                _walk(resolved, files)
     return files
 
 
@@ -414,7 +437,7 @@ def measure(command: str, cwd: str | None = None) -> dict:
         else:
             untracked += 1
             if len(sample_untracked) < MAX_SAMPLES:
-                sample_untracked.append(str(path.relative_to(root)) if root and rel else str(path))
+                sample_untracked.append(_display(path, root))
         if rel and rel in ignored_set:
             ignored_count += 1
         try:
@@ -422,7 +445,7 @@ def measure(command: str, cwd: str | None = None) -> dict:
         except OSError:
             pass
         if len(valuable) < MAX_VALUABLE and is_valuable(path):
-            valuable.append(str(path.relative_to(root)) if root and rel else str(path))
+            valuable.append(_display(path, root))
 
     if not untracked and total_bytes < 1024 * 1024:
         risk = "low"
