@@ -147,6 +147,19 @@ BLASTRADIUS_POLICY=relaxed hermes ...
 
 ---
 
+### 7. What counts as destructive
+
+| shape | measured as |
+| --- | --- |
+| `rm`, `rm -rf`, `rmdir` | the files under each target, globs expanded the way the shell would |
+| `git clean -f`, `git reset --hard` | the untracked or reset files it would take |
+| `truncate -s 0 file`, `: > file`, `> file` | the file it empties |
+| `mv a b` where `b` exists | the destination it overwrites |
+
+`2> file` and `>> file` are not truncation and are ignored, a `>` inside quotes is text rather than a
+redirect, and anything that cannot be resolved (`> $(mktemp)`, `> build/*.log`, `find . -delete`, a
+path built by a variable) is reported as **unmeasured** instead of being counted as zero files.
+
 ## Tools and commands
 
 | Interface | What it does |
