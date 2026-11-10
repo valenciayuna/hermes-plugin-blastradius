@@ -1,6 +1,6 @@
 # Blast Radius 2.0
 
-**Know what breaks before your agent does — and keep a way back.**
+**Know what breaks before your agent does, and keep a way back.**
 
 A Hermes Agent plugin that measures a destructive command's real target, copies it into a
 checksummed snapshot before it runs, and restores it afterwards when something goes wrong.
@@ -74,7 +74,7 @@ sh -c 'bash -c "rm -rf data"'      # nested wrapper, still measured
 
 Still reported as **unmeasured** instead of guessed: command substitution (`$(…)`, backticks),
 unresolved variables, `ssh`, `eval`/`source`, and dynamic `xargs`. When only part of a chain can
-be seen, the report says so — `balanced` and `relaxed` block with a *partial measurement*
+be seen, the report says so. `balanced` and `relaxed` block with a *partial measurement*
 warning rather than passing quietly, and `strict` blocks outright.
 
 Recursion depth is capped at 3 wrappers.
@@ -179,7 +179,10 @@ What that means in practice:
 git clone https://github.com/valenciayuna/hermes-plugin-blastradius
 cd hermes-plugin-blastradius
 
-python3 tests/blast_proof.py     # 80 checks, isolated temp repos
+python3 tests/blast_proof.py      # 80 checks, isolated temp repos
+python3 tests/audit_parser.py     # 16 adversarial command shapes
+python3 tests/audit_snapshot.py   # 12 snapshot, restore and policy checks
+python3 tests/audit_integration.py  # 7 Hermes dispatcher checks
 python3 demo/demo.py             # protect -> destroy -> restore transcript
 hermes plugins validate .
 hermes plugins doctor .
@@ -222,6 +225,10 @@ blastradius_core/
   policy.py                 relaxed / balanced / strict
   hooks.py                  pre_tool_call, tool handlers, command dispatcher
 tests/blast_proof.py        80 assertions, stdlib only
+tests/audit_parser.py       16 adversarial parser checks
+tests/audit_snapshot.py     12 snapshot, restore and policy checks
+tests/audit_integration.py   7 dispatcher checks
+docs/audit.md               what the audit found, including two fixed bugs
 demo/demo.py                end-to-end demo, real deletes and real restores
 ```
 
