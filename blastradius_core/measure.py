@@ -198,7 +198,8 @@ def classify(command: str) -> str | None:
         return "git-reset-hard"
     if _RM_RE.search(command):
         return "rm"
-    if _TRUNCATE_RE.search(command) or _REDIRECT_TRUNC_RE.search(command):
+    unquoted = _strip_quotes(command)
+    if _TRUNCATE_RE.search(unquoted) or _REDIRECT_TRUNC_RE.search(unquoted):
         return "truncate"
     if _MV_RE.search(command):
         return "mv"
@@ -217,10 +218,33 @@ def _leading_tokens(command: str) -> list[str]:
         return segment.split()
 
 
+def _strip_quotes(command: str) -> str:
+    """Blank out quoted spans so `echo "see > notes.txt"` is not read as a redirect."""
+    out: list[str] = []
+    quote: str | None = None
+    i = 0
+    while i < len(command):
+        ch = command[i]
+        if quote:
+            if ch == "\\" and quote == '"' and i + 1 < len(command):
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+            out.append(" ")
+        elif ch in ("'", '"'):
+            quote = ch
+            out.append(" ")
+        else:
+            out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 def redirect_targets(command: str) -> list[str]:
     """Files a `>` would empty. Pseudo files and anything we cannot resolve are left out."""
     out: list[str] = []
-    for match in _REDIRECT_TRUNC_RE.finditer(command):
+    for match in _REDIRECT_TRUNC_RE.finditer(_strip_quotes(command)):
         target = match.group(1)
         if target.startswith(("/dev/", "/proc/", "/sys/")):
             continue
@@ -422,7 +446,7 @@ def measure(command: str, cwd: str | None = None) -> dict:
             continue
         kinds.append(kind)
         found = _files_for_task(task)
-        if kind == "truncate" and not found and _REDIRECT_TRUNC_RE.search(task.segment):
+        if kind == "truncate" and not found and _REDIRECT_TRUNC_RE.search(_strip_quotes(task.segment)):
             # `> $(mktemp)` or `> build/*` empties something we cannot name. Saying zero files
             # would read as harmless, so this stays unmeasured.
             unresolved_redirects.append(task.segment.strip())
